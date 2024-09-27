@@ -8,7 +8,11 @@
     "dev": "remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "remix-serve ./build/server/index.js",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "db:migrate": "node --loader ts-node/esm ./node_modules/.bin/knex migrate:latest --knexfile ./knexfile.js",
+    "db:rollback": "node --loader ts-node/esm ./node_modules/.bin/knex migrate:rollback --knexfile ./knexfile.js",
+    "db:seed": "node --loader ts-node/esm ./node_modules/.bin/knex seed:run --knexfile ./knexfile.js",
+    "db:make-migration": "node --loader ts-node/esm ./node_modules/.bin/knex migrate:make --knexfile ./knexfile.js"
   },
   "dependencies": {
     "@remix-run/node": "^2.12.1",
@@ -35,6 +39,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5.1.6",
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1"
