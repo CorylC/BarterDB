@@ -18,7 +18,7 @@ CREATE TABLE item (
     FOREIGN KEY (userId) REFERENCES users(userId) ON DELETE CASCADE
 );
 
-CREATE TABLE Listing (
+CREATE TABLE listing (
     listingId INTEGER PRIMARY KEY AUTOINCREMENT,
     userId INTEGER NOT NULL,
     itemId INTEGER NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE Listing (
     FOREIGN KEY (partnerId) REFERENCES users(userId) ON DELETE SET NULL
 );
 
-CREATE TABLE Transaction (
+CREATE TABLE transactions (
     transactionId INTEGER PRIMARY KEY AUTOINCREMENT,
     listing1 INTEGER NOT NULL,
     listing2 INTEGER NOT NULL,
