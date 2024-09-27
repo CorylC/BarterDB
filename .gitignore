@@ -4,4 +4,4 @@ node_modules
 /build
 .env
 
-dev.sqlite3
+db.sqlite3
