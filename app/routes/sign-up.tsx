@@ -3,7 +3,9 @@ import { Form, useActionData } from "@remix-run/react";
 import db from "~/db.server";
 import { commitSession, getSession } from "~/sessions";
 import Button from "~/src/components/Button";
+import H1 from "~/src/components/H1";
 import LabeledTextInput from "~/src/components/LabeledTextInput";
+import Link from "~/src/components/Link";
 import TextInput from "~/src/components/TextInput";
 import { passwordPattern } from "~/src/helpers/passwordHelpers";
 
@@ -75,27 +77,32 @@ export default function SignUp() {
 
   return (
     <div className="flex flex-col h-screen w-screen items-center justify-center">
-      <h1 className="mb-10">Sign Up</h1>
-      <Form method="POST" className="flex flex-col gap-4 items-end">
-        <LabeledTextInput
-          id="username"
-          label="Username"
-          errorMessage={data?.errors?.username}
-          placeholder="JohnDoe"
-        />
-        <LabeledTextInput
-          id="password"
-          label="Password"
-          errorMessage={data?.errors?.password}
-          type="password"
-        />
-        <LabeledTextInput
-          id="confirm-password"
-          label="Confirm Password"
-          errorMessage={data?.errors?.confirmPassword}
-          type="password"
-        />
+      <H1 className="mb-10">Sign Up</H1>
+      <Form method="POST" className="flex flex-col gap-4 items-center">
+        <div className="flex flex-col gap-4 items-end">
+          <LabeledTextInput
+            id="username"
+            label="Username"
+            errorMessage={data?.errors?.username}
+            placeholder="JohnDoe"
+          />
+          <LabeledTextInput
+            id="password"
+            label="Password"
+            errorMessage={data?.errors?.password}
+            type="password"
+          />
+          <LabeledTextInput
+            id="confirm-password"
+            label="Confirm Password"
+            errorMessage={data?.errors?.confirmPassword}
+            type="password"
+          />
+        </div>
         <Button type="submit">Sign Up</Button>
+        <p>
+          Already have an account? <Link href="/login">Login</Link>
+        </p>
       </Form>
     </div>
   );

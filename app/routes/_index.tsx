@@ -1,6 +1,7 @@
 import { useLoaderData } from "@remix-run/react";
 import db from "~/db.server";
 import { getSession } from "~/sessions";
+import H1 from "~/src/components/H1";
 
 export async function loader({ request }) {
   const session = await getSession(request.headers.get("Cookie"));
@@ -28,7 +29,7 @@ export default function Index() {
           <p>You are not currently logged in.</p>
         </div>
       )}
-      <h1>Current Users</h1>
+      <H1>Current Users</H1>
       <div className="flex flex-col">
         {data.map((user) => (
           <p key={user.userId}>{user.username}</p>
