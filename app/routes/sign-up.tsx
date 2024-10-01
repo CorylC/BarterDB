@@ -6,7 +6,6 @@ import Button from "~/src/components/Button";
 import H1 from "~/src/components/H1";
 import LabeledTextInput from "~/src/components/LabeledTextInput";
 import Link from "~/src/components/Link";
-import TextInput from "~/src/components/TextInput";
 import { passwordPattern } from "~/src/helpers/passwordHelpers";
 
 export const action: ActionFunction = async ({ request }) => {
