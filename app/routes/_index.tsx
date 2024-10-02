@@ -2,6 +2,7 @@ import { useLoaderData } from "@remix-run/react";
 import db from "~/db.server";
 import { getSession } from "~/sessions";
 import H1 from "~/src/components/H1";
+import Link from "~/src/components/Link";
 
 export async function loader({ request }) {
   const session = await getSession(request.headers.get("Cookie"));
@@ -25,8 +26,10 @@ export default function Index() {
           <p>userId: {userId}</p>
         </div>
       ) : (
-        <div>
+        <div className="mb-8 flex flex-col">
           <p>You are not currently logged in.</p>
+          <Link href="/login">Login</Link>
+          <Link href="/sign-up">Sign Up</Link>
         </div>
       )}
       <H1>Current Users</H1>
