@@ -44,3 +44,16 @@ CREATE TABLE transactions (
     FOREIGN KEY (listing1) REFERENCES Listing(listingId) ON DELETE CASCADE,
     FOREIGN KEY (listing2) REFERENCES Listing(listingId) ON DELETE CASCADE
 );
+
+--Creating basic entries
+INSERT INTO users (userId, username, password) VALUES (0, 'Admin', 'p@ssw0rd!');
+INSERT INTO users (userId, username, password) VALUES (1, 'Steven', 'p@ssw0rd!');
+INSERT INTO users (userId, username, password) VALUES (2, 'Matthew', 'p@ssw0rd!');
+INSERT INTO users (userId, partnerId, username, password) VALUES (3, 4, 'Henery', 'p@ssw0rd!');
+INSERT INTO users (userId, partnerId, username, password) VALUES (4, 3, 'Matthew', 'p@ssw0rd!');
+
+--Creating item values to create standards
+INSERT INTO item (itemID, userId, amount, itemName, InMovement, valuePerUnit) Values (1, 0, "0", "Wheat", false, 5);
+INSERT INTO item (itemID, userId, amount, itemName, InMovement, valuePerUnit) Values (2, 0, "0", "Corn", false, 2);
+INSERT INTO item (itemID, userId, amount, itemName, InMovement, valuePerUnit) Values (3, 0, "0", "Barley", false, 10);
+INSERT INTO item (itemID, userId, amount, itemName, InMovement, valuePerUnit) Values (4, 0, "0", "Peas", false, 3);
