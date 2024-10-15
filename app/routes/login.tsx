@@ -29,7 +29,7 @@ export async function action({ request }: ActionFunctionArgs) {
     // @ts-expect-error: rah
     session.set("username", username);
 
-    throw redirect("/", {
+    throw redirect("/dashboard", {
       headers: {
         "Set-Cookie": await commitSession(session),
       },

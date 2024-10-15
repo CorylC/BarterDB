@@ -63,7 +63,7 @@ export const action: ActionFunction = async ({ request }) => {
     // @ts-ignore
     session.set("username", username);
 
-    throw redirect("/", {
+    throw redirect("/dashboard", {
       headers: {
         "Set-Cookie": await commitSession(session),
       },
