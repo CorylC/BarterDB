@@ -21,7 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
-  const { userId } = getUserInfoFromCookie(request);
+  const { userId } = await getUserInfoFromCookie(request);
 
   const itemWant = formData.get("item-want");
   const itemOffer = formData.get("item-offer");
