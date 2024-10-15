@@ -32,24 +32,27 @@ export async function action({ request }: ActionFunctionArgs) {
     .from("item")
     .where({ itemName: itemWant })
     .first();
+
   const itemOfferInfo = await db
     .select("itemID", "valuePerUnit")
     .from("item")
-    .where({ itemName: itemOffer })
+    .where({ itemName: itemOffer, userId })
     .first();
 
   const wantQuantity =
     (Number(quantity) * itemOfferInfo.valuePerUnit) / itemWantInfo.valuePerUnit;
 
-  await db.insert({
-    userId,
-    itemId: itemOfferInfo.itemID,
-    hasAmount: quantity,
-    wants: itemWant,
-    wantsAmount: wantQuantity,
-    partnerId: null,
-    tradeValue: 1,
-  });
+  await db
+    .insert({
+      userId,
+      itemId: itemOfferInfo.itemId,
+      hasAmount: quantity,
+      wants: itemWant,
+      wantsAmount: wantQuantity,
+      partnerId: null,
+      tradeValue: 1,
+    })
+    .into("listing");
 
   return json({ success: true });
 }

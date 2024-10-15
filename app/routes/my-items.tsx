@@ -66,7 +66,7 @@ export const action: ActionFunction = async ({ request }) => {
 
   var nextId = await db("item").max("itemId as maxId");
   const ItemId = nextId[0].maxId + 1;
-  const specificVal = itemValue[0].valuePerUnit;
+  const specificVal = itemValue[0]?.valuePerUnit ?? 10;
   const inmovement = false;
 
   const newItem = {
