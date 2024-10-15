@@ -9,6 +9,7 @@ const SIDEBAR_LINKS = [
   { label: "My Account", to: "/account" },
   { label: "Search", to: "/search" },
   { label: "New Listing", to: "/new-listing" },
+  { label: "My Items", to: "/my-items" },
 ];
 
 export default function Sidebar() {
