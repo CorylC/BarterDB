@@ -10,38 +10,32 @@ export async function loader({ request }) {
 
   var data;
   try {
-    data = await db
-      .select("*")
-      .from("users")
-      .where("userId", userId);
+    data = await db.select("*").from("users").where("userId", userId).first();
   } catch (error) {
-    data = [
-      {
-        "username": "no account.",
-        "partnerId": "no account.",
-        "userId": "no account."
-      },
-    ];
+    data = {
+      username: "no account.",
+      partnerId: "no account.",
+      userId: "no account.",
+    };
   }
 
-  return { data, userId };
+  return { user: data, userId };
 }
 
 export default function myItems() {
-  const { data, userId } = useLoaderData<typeof loader>();
+  const { user, userId } = useLoaderData<typeof loader>();
 
   return (
     <div className="flex">
       <Sidebar />
-      <H1>User:</H1>
-      <div>
-        {data.map((User) => (
-          <p key={User.userID}>
-            Name: {User.username}, PartnerId: {User.partnerId}, UserId:{User.userId}
-          </p>
-        ))}
+      <div className="p-4">
+        <H1>User:</H1>
+        <div>
+          <p>Name: {user.username}</p>
+          <p>PartnerId: {user.partnerId ?? "None"}</p>
+          <p>UserId: {user.userId}</p>
+        </div>
       </div>
     </div>
   );
 }
-  

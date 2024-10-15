@@ -54,11 +54,14 @@ export const action: ActionFunction = async ({ request }) => {
       .where("userId", userId)
       .update({ partnerId }, "partnerId");
 
+    // @ts-ignore
+    ret.success = true;
     return ret;
   }
 };
 
 export default function addPartner() {
+  const actionData = useActionData<typeof action>();
   const data = useActionData<typeof action>();
 
   return (
@@ -79,7 +82,9 @@ export default function addPartner() {
               placeholder="partnerId"
             />
           </div>
-          <Button type="submit">Set Partner</Button>
+          <Button type="submit">
+            {actionData?.success ? "Success" : "Add Partner"}
+          </Button>
         </Form>
       </div>
     </div>

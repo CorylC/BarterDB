@@ -16,7 +16,9 @@ export default function Dashboard() {
   return (
     <div className="flex">
       <Sidebar />
-      <H1>Welcome back, {user.username}</H1>
+      <div className="p-4">
+        <H1>Welcome back, {user.username}</H1>
+      </div>
     </div>
   );
 }

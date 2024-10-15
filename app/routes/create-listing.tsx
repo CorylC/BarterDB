@@ -1,5 +1,5 @@
 import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
-import { Form, json, useLoaderData } from "@remix-run/react";
+import { Form, json, useActionData, useLoaderData } from "@remix-run/react";
 import db from "~/db.server";
 import Button from "~/src/components/Button";
 import H1 from "~/src/components/H1";
@@ -59,6 +59,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 export default function CreateListingPage() {
   const { ownedItems, availableItems } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
 
   return (
     <div className="flex">
@@ -98,7 +99,9 @@ export default function CreateListingPage() {
               ))}
             </select>
           </div>
-          <Button type="submit">Submit</Button>
+          <Button type="submit" disabled={actionData?.success}>
+            {actionData?.success ? "Saved!" : "Submit"}
+          </Button>
         </Form>
       </div>
     </div>
