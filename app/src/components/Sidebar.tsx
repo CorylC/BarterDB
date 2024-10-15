@@ -6,7 +6,7 @@ import Link from "./Link";
 
 const SIDEBAR_LINKS = [
   { label: "Dashboard", to: "/dashboard" },
-  { label: "My Account", to: "/account" },
+  { label: "My Account", to: "/myAccount" },
   { label: "Search", to: "/search" },
   { label: "New Listing", to: "/create-listing" },
   { label: "My Items", to: "/my-items" },
