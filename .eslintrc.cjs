@@ -6,6 +6,10 @@
 
 /** @type {import('eslint').Linter.Config} */
 module.exports = {
+  rules: {
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/ban-ts-comment": false,
+  },
   root: true,
   parserOptions: {
     ecmaVersion: "latest",
