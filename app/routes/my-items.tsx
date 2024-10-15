@@ -94,7 +94,7 @@ export default function myItems() {
 
   return (
     <div className="flex">
-      <Sidebar />
+    <Sidebar />
       <H1>Current Items:</H1>
         <div>
           {data.map((item) => (

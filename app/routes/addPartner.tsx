@@ -7,6 +7,7 @@ import H1 from "~/src/components/H1";
 import LabeledTextInput from "~/src/components/LabeledTextInput";
 import Link from "~/src/components/Link";
 import { passwordPattern } from "~/src/helpers/passwordHelpers";
+import Sidebar from "~/src/components/Sidebar";
 
 export const action: ActionFunction = async ({ request }) => {
   const ret = {
@@ -64,6 +65,8 @@ export default function addPartner() {
   const data = useActionData<typeof action>();
 
   return (
+    <div  className="flex">
+    <Sidebar />
     <div className="flex flex-col h-screen w-screen items-center justify-center">
       <H1 className="mb-10">Add a partner</H1>
       <p>Both you and your partner must enter each others userId into this field before you are recognized as partners</p>
@@ -78,6 +81,7 @@ export default function addPartner() {
         </div>
         <Button type="submit">Set Partner</Button>
       </Form>
+    </div>
     </div>
   );
 }

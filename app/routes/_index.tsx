@@ -3,6 +3,7 @@ import db from "~/db.server";
 import { getSession } from "~/sessions";
 import H1 from "~/src/components/H1";
 import Link from "~/src/components/Link";
+import Sidebar from "~/src/components/Sidebar";
 
 export async function loader({ request }) {
   const session = await getSession(request.headers.get("Cookie"));
@@ -19,6 +20,7 @@ export default function Index() {
 
   return (
     <div className="flex flex-col h-screen w-screen items-center justify-center">
+      <Sidebar />
       {username ? (
         <div className="mb-8">
           <p>You are logged in as:</p>
