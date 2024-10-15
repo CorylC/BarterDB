@@ -61,12 +61,11 @@ export const action: ActionFunction = async ({ request }) => {
   const itemValue = await db
     .select("*")
     .from("item")
-    .where("userId", userId)
     .andWhere("itemName", ItemName);
 
   var nextId = await db("item").max("itemId as maxId");
   const ItemId = nextId[0].maxId + 1;
-  const specificVal = itemValue[0].valuePerUnit;
+  const specificVal = itemValue[0]?.valuePerUnit ?? 10;
   const inmovement = false;
 
   const newItem = {
@@ -90,35 +89,39 @@ export default function myItems() {
   return (
     <div className="flex">
       <Sidebar />
-      <H1>Current Items:</H1>
-      <div>
-        {data.map((item) => (
-          <p key={item.itemID}>
-            Name: {item.itemName}, Amount: {item.amount}, Value per Unit:{" "}
-            {item.valuePerUnit}
-          </p>
-        ))}
-      </div>
-
-      <div className="flex flex-col h-screen w-screen items-center justify-center">
-        <H1 className="mb-10">Add an Item</H1>
-        <Form method="POST" className="flex flex-col gap-4 items-center">
-          <div className="flex flex-col gap-4 items-end">
-            <LabeledTextInput
-              id="ItemName"
-              label="ItemName"
-              errorMessage={actionData?.errors?.ItemName}
-              placeholder="Corn"
-            />
-            <LabeledTextInput
-              id="amount"
-              label="amount"
-              errorMessage={actionData?.errors?.amount}
-              placeholder="0"
-            />
+      <div className="flex flex-col items-center w-[95vw] justify-around">
+        <div className="flex flex-col items-center">
+          <H1>Current Items:</H1>
+          <div>
+            {data.map((item) => (
+              <p key={item.itemID}>
+                Name: {item.itemName}, Amount: {item.amount}, Value per Unit:{" "}
+                {item.valuePerUnit}
+              </p>
+            ))}
           </div>
-          <Button type="submit">Submit</Button>
-        </Form>
+        </div>
+
+        <div className="flex flex-col items-center justify-center">
+          <H1 className="mb-10">Add an Item</H1>
+          <Form method="POST" className="flex flex-col gap-4 items-center">
+            <div className="flex flex-col gap-4 items-end">
+              <LabeledTextInput
+                id="ItemName"
+                label="ItemName"
+                errorMessage={actionData?.errors?.ItemName}
+                placeholder="Corn"
+              />
+              <LabeledTextInput
+                id="amount"
+                label="amount"
+                errorMessage={actionData?.errors?.amount}
+                placeholder="0"
+              />
+            </div>
+            <Button type="submit">Submit</Button>
+          </Form>
+        </div>
       </div>
     </div>
   );
