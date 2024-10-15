@@ -8,7 +8,7 @@ const SIDEBAR_LINKS = [
   { label: "Dashboard", to: "/dashboard" },
   { label: "My Account", to: "/account" },
   { label: "Search", to: "/search" },
-  { label: "New Listing", to: "/new-listing" },
+  { label: "New Listing", to: "/create-listing" },
   { label: "My Items", to: "/my-items" },
   { label: "Add Partner", to: "/addPartner" },
 ];

@@ -50,7 +50,7 @@ INSERT INTO users (userId, username, password) VALUES (0, 'Admin', 'p@ssw0rd!');
 INSERT INTO users (userId, username, password) VALUES (1, 'Steven', 'p@ssw0rd!');
 INSERT INTO users (userId, username, password) VALUES (2, 'Matthew', 'p@ssw0rd!');
 INSERT INTO users (userId, partnerId, username, password) VALUES (3, 4, 'Henery', 'p@ssw0rd!');
-INSERT INTO users (userId, partnerId, username, password) VALUES (4, 3, 'Matthew', 'p@ssw0rd!');
+INSERT INTO users (userId, partnerId, username, password) VALUES (4, 3, 'Frank', 'p@ssw0rd!');
 
 --Creating item values to create standards
 INSERT INTO item (itemID, userId, amount, itemName, InMovement, valuePerUnit) Values (1, 0, "0", "Wheat", false, 5);
