@@ -14,18 +14,18 @@ export async function loader({ request }) {
   const userId = session.get("userId");
 
   var data;
-  // try{
+   try{
     data = await db.select("itemId", "amount", "itemName", "valuePerUnit").from("item").where("userId", userId);
-  // } catch (error){
-  //   data = [{
-  //     "itemID": 0,
-  //     "userID": 0,
-  //     "amount": 0,
-  //     "itemName": "Somethings is wrong",
-  //     "inMovement": 0,
-  //     "valuePerUnit": 0
-  //   }];
-  // }
+  } catch (error){
+    data = [{
+      "itemID": '',
+      "userID": '',
+      "amount": '',
+      "itemName": "There are no Items",
+      "inMovement": '',
+      "valuePerUnit": ''
+    }];
+  }
 
   return { data, userId };
 }
