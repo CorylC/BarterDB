@@ -10,6 +10,11 @@ import LabeledTextInput from "~/src/components/LabeledTextInput";
 export async function loader({ request }) {
   const { userId } = await getUserInfoFromCookie(request);
 
+  const allItemsData = await db
+    .select("itemName", "valuePerUnit")
+    .from("item")
+    .distinct("itemName");
+
   var data;
   try {
     data = await db
@@ -29,7 +34,7 @@ export async function loader({ request }) {
     ];
   }
 
-  return { data, userId };
+  return { data, userId, allItemsData };
 }
 
 export const action: ActionFunction = async ({ request }) => {
@@ -83,7 +88,7 @@ export const action: ActionFunction = async ({ request }) => {
 };
 
 export default function myItems() {
-  const { data } = useLoaderData<typeof loader>();
+  const { data, allItemsData } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   return (
@@ -105,13 +110,14 @@ export default function myItems() {
         <div className="flex flex-col items-center justify-center">
           <H1 className="mb-10">Add an Item</H1>
           <Form method="POST" className="flex flex-col gap-4 items-center">
-            <div className="flex flex-col gap-4 items-end">
-              <LabeledTextInput
-                id="ItemName"
-                label="ItemName"
-                errorMessage={actionData?.errors?.ItemName}
-                placeholder="Corn"
-              />
+            <div className="flex flex-col gap-4 items-center">
+              <select name="ItemName" id="ItemName">
+                {allItemsData.map((item) => (
+                  <option key={item.itemName} value={item.itemName}>
+                    {item.itemName}
+                  </option>
+                ))}
+              </select>
               <LabeledTextInput
                 id="amount"
                 label="amount"
