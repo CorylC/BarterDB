@@ -15,7 +15,7 @@ export async function loader({ request }) {
     .from("item")
     .distinct("itemName");
 
-  var data;
+  let data;
   try {
     data = await db
       .select("itemId", "amount", "itemName", "valuePerUnit")

@@ -96,8 +96,6 @@ export default function addPartner() {
       <Sidebar />
       <div className="flex flex-col h-screen w-screen items-center justify-center">
         <H1 className="mb-10">Add a partner</H1>
-        {JSON.stringify(userData)}
-        {JSON.stringify(partnerData)}
         {partnershipMade && (
           <p>You are partners with user {partnerData?.username}</p>
         )}

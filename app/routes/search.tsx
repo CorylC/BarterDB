@@ -1,5 +1,11 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { Form, json, useLoaderData, useSearchParams } from "@remix-run/react";
+import {
+  Form,
+  json,
+  Link,
+  useLoaderData,
+  useSearchParams,
+} from "@remix-run/react";
 import db from "~/db.server";
 import Button from "~/src/components/Button";
 import H1 from "~/src/components/H1";
@@ -87,7 +93,9 @@ export default function Search() {
                   <p>
                     {listing.hasAmount} {offeringItemName} for{" "}
                     {listing.wantsAmount} {listing.wants}
-                    <Button type="button">Trade</Button>
+                    <Link to={`/trade/${listing.listingId}`}>
+                      <Button type="button">Trade</Button>
+                    </Link>
                   </p>
                 </div>
               ))}
