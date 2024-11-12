@@ -5,12 +5,12 @@ import Sidebar from "~/src/components/Sidebar";
 import { getUserInfoFromCookie } from "~/src/helpers/auth";
 import db from "~/db.server";
 import { ActionFunctionArgs, redirect } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
+import { Form } from "@remix-run/react";
 import Button from "~/src/components/Button";
 import { destroySession } from "~/sessions";
-import { commitSession, getSession } from "~/sessions";
+import { getSession } from "~/sessions";
 
-export async function loader({ request }) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const { userId } = await getUserInfoFromCookie(request);
 
   var data;

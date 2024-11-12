@@ -41,19 +41,6 @@ export async function loader({ request }) {
     data = [];
   }
 
-  const sanitizedData = data.map((listing) => {
-    return {
-      ...listing,
-      fullHash: undefined,
-      firstHalfHash: undefined,
-      secondHalfHash: undefined,
-      hashKeyHalf:
-        listing.listingId === listing.listing1
-          ? listing.firstHalfHash
-          : listing.secondHalfHash,
-    };
-  });
-
   return { listings: data, userId };
 }
 
@@ -82,6 +69,7 @@ function ListingDisplay({
   wants,
   wantsAmount,
   transactionId,
+  fullHash,
   firstHalfHash,
   secondHalfHash,
   listing1,
@@ -96,6 +84,9 @@ function ListingDisplay({
     (listingId === listing1 && !firstHalfHash) ||
     (listingId === listing2 && !secondHalfHash);
 
+  const hashHalf =
+    listingId === listing1 ? fullHash.slice(0, 8) : fullHash.slice(8, 16);
+
   return (
     <div key={listingId} className="p-2 border border-black rounded-sm">
       <p>Offer: {itemName}</p>
@@ -104,14 +95,19 @@ function ListingDisplay({
       <p>Looking For Quantity: {wantsAmount}</p>
       {isPartOfTransaction && (
         <>
-          <p>
-            Your Transaction Key:{" "}
-            {listingId === listing1 ? firstHalfHash : secondHalfHash}
-          </p>
+          <p>Your Transaction Key: {hashHalf}</p>
           {isTransactionPending ? (
             <>
               <p>Transaction Pending</p>
-              {actionRequired && <p>ACTION REQUIRED</p>}
+              {actionRequired && (
+                <p>
+                  ACTION REQUIRED:{" "}
+                  <span>
+                    Send your items along with your secure transaction key to
+                    the BarterDB mediators.
+                  </span>
+                </p>
+              )}
             </>
           ) : (
             <p>Transaction Complete</p>

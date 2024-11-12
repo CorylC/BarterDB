@@ -150,7 +150,6 @@ export default function Trade() {
           Your partner has: {partnerHasAmount} {listingInfo.wants}
         </p>
         <div>
-          {JSON.stringify(actionData)}
           {canMakeTrade ? (
             <Form method="POST">
               <Button
