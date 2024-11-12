@@ -113,8 +113,6 @@ export async function action({ request, params }: LoaderFunctionArgs) {
         listing1: listingId,
         listing2: matchingListing[0].listingId,
         fullHash: hashKey,
-        firstHalfHash: hashKey.slice(0, 8),
-        secondHalfHash: hashKey.slice(8, 16),
         equivalence: 1.0, // Im gonna be honest I don't know what this is for
       })
       .returning("transactionId");

@@ -34,9 +34,13 @@ export default function Sidebar() {
           </div>
           {SIDEBAR_LINKS.map((link) =>
             link.to === location.pathname ? (
-              <p className="font-bold underline">{link.label}</p>
+              <p className="font-bold underline" key={link.to}>
+                {link.label}
+              </p>
             ) : (
-              <Link href={link.to}>{link.label}</Link>
+              <Link href={link.to} key={link.to}>
+                {link.label}
+              </Link>
             )
           )}
         </>
