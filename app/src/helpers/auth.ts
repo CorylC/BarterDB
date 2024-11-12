@@ -13,7 +13,7 @@ export async function getUserInfoFromCookie(request: Request) {
   await verifyLoggedIn(request);
 
   const session = await getSession(request.headers.get("Cookie"));
-  const userId = session.get("userId");
+  const userId = session.get("userId") as number | undefined;
   const username = session.get("username");
 
   return { userId, username };
