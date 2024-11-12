@@ -10,13 +10,28 @@ import { getUserInfoFromCookie } from "~/src/helpers/auth";
 export async function loader({ request }: LoaderFunctionArgs) {
   const { userId } = await getUserInfoFromCookie(request);
   const ownedItems = await db
-    .select("itemName", "itemID")
-    .distinct("itemName")
+    .select("item.itemName", "item.itemID")
+    .distinct("item.itemName")
     .from("item")
-    .where({ userId });
+    .leftOuterJoin("listing", function () {
+      this.on("item.itemID", "=", "listing.itemId");
+    })
+    .where({ "item.userId": userId })
+    .andWhere({ "listing.listingId": null });
+
+  const partnerItems = await db
+    .select("item.itemName", "item.itemID")
+    .from("item")
+    .leftOuterJoin("listing", function () {
+      this.on("item.itemID", "=", "listing.itemId");
+    })
+    .join("users", "item.userId", "users.userId")
+    .where("users.partnerId", userId)
+    .andWhere({ "listing.listingId": null });
+
   const availableItems = await db.select("itemName").distinct().from("item");
 
-  return json({ ownedItems, availableItems });
+  return json({ ownedItems, availableItems, partnerItems });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -58,7 +73,8 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function CreateListingPage() {
-  const { ownedItems, availableItems } = useLoaderData<typeof loader>();
+  const { ownedItems, availableItems, partnerItems } =
+    useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   return (
@@ -69,18 +85,30 @@ export default function CreateListingPage() {
         <p className="my-5">
           Please enter the details of the trade you would like to make.
         </p>
+        {JSON.stringify(partnerItems)}
         <Form method="POST" className="flex flex-col gap-4">
           <div className="flex gap-3">
             <label htmlFor="item-offer">
               Which of your items would you like to trade?
             </label>
             <select name="item-offer" id="item-offer">
+              <label htmlFor="">rah</label>
               <option>Please select</option>
-              {ownedItems.map((item) => (
-                <option key={item.itemName} value={item.itemName}>
-                  {item.itemName}
-                </option>
-              ))}
+              <optgroup label="Your Items">
+                {!ownedItems.length && <option disabled>None</option>}
+                {ownedItems.map((item) => (
+                  <option key={item.itemName} value={item.itemName}>
+                    {item.itemName}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Your Partner's Items">
+                {partnerItems.map((item) => (
+                  <option key={item.itemName} value={item.itemName}>
+                    {item.itemName}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
           <LabeledTextInput
