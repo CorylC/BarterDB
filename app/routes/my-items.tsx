@@ -41,24 +41,24 @@ export const action: ActionFunction = async ({ request }) => {
   const ret = {
     errors: {
       ItemName: "",
-      amount: "",
+      newAmount: "",
     },
   };
 
   const { userId } = await getUserInfoFromCookie(request);
   const formData = await request.formData();
   const ItemName = formData.get("ItemName");
-  const amount = formData.get("amount") as string;
+  const newAmount = formData.get("amount") as string;
 
   if (!ItemName) {
     ret.errors.ItemName = "ItemName is required";
   }
 
-  if (!amount) {
-    ret.errors.amount = "amount is required";
+  if (!newAmount) {
+    ret.errors.newAmount = "amount is required";
   }
 
-  if (ret.errors.ItemName || ret.errors.amount) {
+  if (ret.errors.ItemName || ret.errors.newAmount) {
     return ret;
   }
 
@@ -66,23 +66,37 @@ export const action: ActionFunction = async ({ request }) => {
   const itemValue = await db
     .select("*")
     .from("item")
-    .andWhere("itemName", ItemName);
+    .where("itemName", ItemName);
 
   var nextId = await db("item").max("itemId as maxId");
   const ItemId = nextId[0].maxId + 1;
   const specificVal = itemValue[0]?.valuePerUnit ?? 10;
   const inmovement = false;
+  var currentSet;
+  try{
+    currentSet = await db.table('item').where("itemName", ItemName).andWhere("userId", userId).pluck("amount").then(function(amounts){
+      return amounts[0];
+    });
+  }catch(error){
+    currentSet = 0;
+  }
 
-  const newItem = {
-    itemID: ItemId,
-    userID: userId,
-    amount: amount,
-    itemName: ItemName,
-    inMovement: false,
-    valuePerUnit: specificVal,
-  };
+  if(typeof currentSet == 'undefined'){
+    console.log('here');
+    const newItem = {
+      itemID: ItemId,
+      userID: userId,
+      amount: newAmount,
+      itemName: ItemName,
+      inMovement: false,
+      valuePerUnit: specificVal,
+    };
 
-  const data = await db.insert(newItem).into("item");
+    const data = await db.insert(newItem).into("item");
+  }else{
+    var affectedRows = await db.table("item").where("itemName", ItemName).andWhere("userId", userId).update("amount", currentSet+Number(newAmount));
+    console.log(`${affectedRows} rows updated.`);
+  }
 
   return ret;
 };
