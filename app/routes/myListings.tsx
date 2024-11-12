@@ -34,18 +34,19 @@ export async function loader({ request }) {
           "listing.listingId"
         );
       })
-      .where("listing.userId", userId);
+      .where("listing.userId", userId)
+      .orWhere("listing.partnerId", userId);
   } catch (error) {
     // @ts-ignore
     console.log(error?.message);
     data = [];
   }
 
-  return { listings: data, userId };
+  return { listings: data };
 }
 
 export default function myItems() {
-  const { listings, userId } = useLoaderData<typeof loader>();
+  const { listings } = useLoaderData<typeof loader>();
 
   return (
     <div className="flex">
@@ -85,7 +86,7 @@ function ListingDisplay({
     (listingId === listing2 && !secondHalfHash);
 
   const hashHalf =
-    listingId === listing1 ? fullHash.slice(0, 8) : fullHash.slice(8, 16);
+    listingId === listing1 ? fullHash?.slice(0, 8) : fullHash?.slice(8, 16);
 
   return (
     <div key={listingId} className="p-2 border border-black rounded-sm">

@@ -1,4 +1,8 @@
-import { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
+import {
+  ActionFunctionArgs,
+  LoaderFunctionArgs,
+  TypedResponse,
+} from "@remix-run/node";
 import { Form, json, useActionData, useLoaderData } from "@remix-run/react";
 import db from "~/db.server";
 import Button from "~/src/components/Button";
@@ -34,9 +38,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
   return json({ ownedItems, availableItems, partnerItems });
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({
+  request,
+}: ActionFunctionArgs): Promise<
+  TypedResponse<{ success: boolean; message?: string }>
+> {
   const formData = await request.formData();
   const { userId } = await getUserInfoFromCookie(request);
+
+  const partnerInfo = await db("users")
+    .select("partnerId")
+    .where("userId", userId)
+    .first();
 
   const itemWant = formData.get("item-want");
   const itemOffer = formData.get("item-offer");
@@ -49,22 +62,35 @@ export async function action({ request }: ActionFunctionArgs) {
     .first();
 
   const itemOfferInfo = await db
-    .select("itemID", "valuePerUnit")
+    .select("itemID", "valuePerUnit", "userId", "amount", "itemName")
     .from("item")
-    .where({ itemName: itemOffer, userId })
+    .where({ itemId: itemOffer })
     .first();
+
+  if (itemOfferInfo?.amount < Number(quantity)) {
+    return json({
+      success: false,
+      message:
+        "You can offer a maximum of " +
+        itemOfferInfo.amount +
+        " units of " +
+        itemOfferInfo.itemName,
+    });
+  }
 
   const wantQuantity =
     (Number(quantity) * itemOfferInfo.valuePerUnit) / itemWantInfo.valuePerUnit;
 
+  const isOnBehalfOfPartner = itemOfferInfo.userId === partnerInfo?.partnerId;
+
   await db
     .insert({
-      userId,
+      userId: itemOfferInfo.userId,
       itemId: itemOfferInfo.itemId,
       hasAmount: quantity,
       wants: itemWant,
       wantsAmount: wantQuantity,
-      partnerId: null,
+      partnerId: isOnBehalfOfPartner ? userId : null,
       tradeValue: 1,
     })
     .into("listing");
@@ -85,7 +111,6 @@ export default function CreateListingPage() {
         <p className="my-5">
           Please enter the details of the trade you would like to make.
         </p>
-        {JSON.stringify(partnerItems)}
         <Form method="POST" className="flex flex-col gap-4">
           <div className="flex gap-3">
             <label htmlFor="item-offer">
@@ -97,14 +122,15 @@ export default function CreateListingPage() {
               <optgroup label="Your Items">
                 {!ownedItems.length && <option disabled>None</option>}
                 {ownedItems.map((item) => (
-                  <option key={item.itemName} value={item.itemName}>
+                  <option key={item.itemId} value={item.itemId}>
                     {item.itemName}
                   </option>
                 ))}
               </optgroup>
               <optgroup label="Your Partner's Items">
+                {!partnerItems.length && <option disabled>None</option>}
                 {partnerItems.map((item) => (
-                  <option key={item.itemName} value={item.itemName}>
+                  <option key={item.itemId} value={item.itemId}>
                     {item.itemName}
                   </option>
                 ))}
@@ -127,6 +153,9 @@ export default function CreateListingPage() {
               ))}
             </select>
           </div>
+          {actionData?.success === false && (
+            <p className="text-red-500">{actionData?.message}</p>
+          )}
           <Button type="submit" disabled={actionData?.success}>
             {actionData?.success ? "Saved!" : "Submit"}
           </Button>
