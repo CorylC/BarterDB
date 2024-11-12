@@ -30,8 +30,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const listings = await db
     .select(
-      "listingID",
-      "itemID",
+      "listingId",
+      "itemId",
       "hasAmount",
       "wants",
       "wantsAmount",
@@ -41,7 +41,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .where({
       wants: searchParams.get("wantItemName"),
     })
-    .whereIn("itemID", offeringItemIDs);
+    .whereIn("itemID", offeringItemIDs)
+    .whereNotIn(
+      "listingId",
+      (
+        await db("transactions").select("listing1 AS listingId")
+      ).map(({ listingId }) => listingId)
+    )
+    .whereNotIn(
+      "listingId",
+      (
+        await db("transactions").select("listing2 AS listingId")
+      ).map(({ listingId }) => listingId)
+    );
 
   return json({ allItemNames, listings });
 }

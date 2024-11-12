@@ -1,10 +1,11 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import db from "~/db.server";
 import Button from "~/src/components/Button";
 import H3 from "~/src/components/H3";
 import Sidebar from "~/src/components/Sidebar";
 import { getUserInfoFromCookie } from "~/src/helpers/auth";
+import randomString from "~/src/helpers/randomString";
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const listingId = params.listingId;
@@ -40,7 +41,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     .first();
 
   let partnerHasAmountSum: any = null;
-  if (partnerInfo.userId) {
+  if (partnerInfo?.userId) {
     partnerHasAmountSum = await db
       .sum("amount")
       .from("item")
@@ -50,7 +51,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   }
 
   const userHasAmount = userHasAmountSum["sum(`amount`)"] ?? 0;
-  const partnerHasAmount = partnerHasAmountSum["sum(`amount`)"] ?? 0;
+  const partnerHasAmount = partnerHasAmountSum?.["sum(`amount`)"] ?? 0;
 
   const canMakeTrade =
     userHasAmount + partnerHasAmount >= listingInfo.wantsAmount;
@@ -63,9 +64,73 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   };
 }
 
+export async function action({ request, params }: LoaderFunctionArgs) {
+  const { userId } = await getUserInfoFromCookie(request);
+  const formData = await request.formData();
+
+  const _action = formData.get("_action");
+
+  if (_action === "TRADE") {
+    // TODO: deal with partners
+    const listingId = params.listingId;
+
+    const listingInfo = await db
+      .select([
+        "l.listingId",
+        "l.userId",
+        "l.itemId",
+        "l.hasAmount",
+        "l.wantsAmount",
+        "l.wants",
+        "l.partnerId",
+        "i.itemName",
+      ])
+      .from("listing AS l")
+      .join("item as i", "i.itemId", "l.itemId")
+      .where("listingId", listingId)
+      .first();
+
+    const wantsItem = await db("item")
+      .select("itemId")
+      .where("itemName", listingInfo.wants)
+      .andWhere("userId", userId)
+      .first();
+
+    const matchingListing = await db("listing")
+      .insert({
+        userId,
+        itemId: wantsItem.itemId,
+        hasAmount: listingInfo.wantsAmount,
+        wantsAmount: listingInfo.hasAmount,
+        wants: listingInfo.itemName,
+        tradeValue: 1.0, // Im gonna be honest I don't know what this is for
+      })
+      .returning("listingId");
+
+    const hashKey = randomString(16);
+    const transaction = await db("transactions")
+      .insert({
+        listing1: listingId,
+        listing2: matchingListing[0].listingId,
+        fullHash: hashKey,
+        firstHalfHash: hashKey.slice(0, 8),
+        secondHalfHash: hashKey.slice(8, 16),
+        equivalence: 1.0, // Im gonna be honest I don't know what this is for
+      })
+      .returning("transactionId");
+
+    if (!!transaction[0]?.transactionId) {
+      return { success: true };
+    }
+  }
+
+  return { success: false };
+}
+
 export default function Trade() {
   const { listingInfo, userHasAmount, partnerHasAmount, canMakeTrade } =
     useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
 
   return (
     <div className="flex">
@@ -87,8 +152,18 @@ export default function Trade() {
           Your partner has: {partnerHasAmount} {listingInfo.wants}
         </p>
         <div>
+          {JSON.stringify(actionData)}
           {canMakeTrade ? (
-            <Button type="button">Trade</Button>
+            <Form method="POST">
+              <Button
+                type="submit"
+                name="_action"
+                value="TRADE"
+                disabled={actionData?.success}
+              >
+                {actionData?.success ? "Success" : "Make Trade"}
+              </Button>
+            </Form>
           ) : (
             <p>You cannot make a trade</p>
           )}

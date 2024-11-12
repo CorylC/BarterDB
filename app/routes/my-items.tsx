@@ -1,4 +1,4 @@
-import { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunction } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import H1 from "~/src/components/H1";
 import Sidebar from "~/src/components/Sidebar";
