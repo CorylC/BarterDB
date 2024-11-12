@@ -4,6 +4,11 @@ import H1 from "~/src/components/H1";
 import Sidebar from "~/src/components/Sidebar";
 import { getUserInfoFromCookie } from "~/src/helpers/auth";
 import db from "~/db.server";
+import { ActionFunctionArgs, redirect } from "@remix-run/node";
+import { Form, useActionData } from "@remix-run/react";
+import Button from "~/src/components/Button";
+import { destroySession } from "~/sessions";
+import { commitSession, getSession } from "~/sessions";
 
 export async function loader({ request }) {
   const { userId } = await getUserInfoFromCookie(request);
@@ -22,6 +27,15 @@ export async function loader({ request }) {
   return { user: data, userId };
 }
 
+export async function action({ request }: ActionFunctionArgs) {
+  const session = await getSession(request.headers.get("Cookie"))
+  return redirect("/", {
+    headers: {
+      "Set-Cookie": await destroySession(session),
+    },
+  })
+}
+
 export default function myItems() {
   const { user, userId } = useLoaderData<typeof loader>();
 
@@ -34,6 +48,12 @@ export default function myItems() {
           <p>Name: {user.username}</p>
           <p>PartnerId: {user.partnerId ?? "None"}</p>
           <p>UserId: {user.userId}</p>
+        </div>
+        <div>
+          <br></br>
+          <Form method="POST">
+            <Button type="submit">Logout</Button>
+          </Form>
         </div>
       </div>
     </div>
