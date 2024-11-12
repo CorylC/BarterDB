@@ -1,5 +1,6 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
+import { i } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import db from "~/db.server";
 import Button from "~/src/components/Button";
 import H3 from "~/src/components/H3";
@@ -71,8 +72,11 @@ export async function action({ request, params }: LoaderFunctionArgs) {
   const _action = formData.get("_action");
 
   if (_action === "TRADE") {
-    // TODO: deal with partners
     const listingId = params.listingId;
+    const useItemOf: "partner" | "user" = formData.get("useItemOf") as any;
+    const partnerId = (
+      await db("users").select("partnerId").where("userId", userId).first()
+    ).partnerId;
 
     const listingInfo = await db
       .select([
@@ -91,14 +95,30 @@ export async function action({ request, params }: LoaderFunctionArgs) {
       .first();
 
     const wantsItem = await db("item")
-      .select("itemId")
+      .select("itemId", "userId", "amount", "valuePerUnit")
       .where("itemName", listingInfo.wants)
-      .andWhere("userId", userId)
+      .andWhere("userId", useItemOf === "partner" ? partnerId : userId)
       .first();
+
+    // split off the correct amount of the item
+    if (wantsItem.amount > listingInfo.wantsAmount) {
+      await db("item").insert({
+        userId: wantsItem.userId,
+        itemName: listingInfo.wants,
+        amount: wantsItem.amount - listingInfo.wantsAmount,
+        valuePerUnit: wantsItem.valuePerUnit,
+        inMovement: false,
+      });
+
+      await db("item")
+        .update({ amount: listingInfo.wantsAmount })
+        .where("itemId", wantsItem.itemId);
+    }
 
     const matchingListing = await db("listing")
       .insert({
-        userId,
+        userId: useItemOf === "partner" ? partnerId : userId,
+        partnerId: useItemOf === "partner" ? userId : partnerId,
         itemId: wantsItem.itemId,
         hasAmount: listingInfo.wantsAmount,
         wantsAmount: listingInfo.hasAmount,
@@ -130,6 +150,13 @@ export default function Trade() {
     useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
+  const userHasEnough = userHasAmount > listingInfo.wantsAmount;
+  const partnerHasEnough = partnerHasAmount > listingInfo.hasAmount;
+
+  const chooseItem = userHasEnough && partnerHasEnough;
+  const mustUseUsersItem = userHasEnough && !partnerHasEnough;
+  const mustUsePartnersItem = partnerHasEnough && !userHasEnough;
+
   return (
     <div className="flex">
       <Sidebar />
@@ -152,6 +179,38 @@ export default function Trade() {
         <div>
           {canMakeTrade ? (
             <Form method="POST">
+              {chooseItem && (
+                <div>
+                  <input
+                    type="radio"
+                    name="useItemOf"
+                    id="useItemOf"
+                    value="user"
+                  />
+                  <input
+                    type="radio"
+                    name="useItemOf"
+                    id="useItemOf"
+                    value="partner"
+                  />
+                </div>
+              )}
+              {mustUseUsersItem && (
+                <input
+                  type="hidden"
+                  name="useItemOf"
+                  id="useItemOf"
+                  value="user"
+                />
+              )}
+              {mustUsePartnersItem && (
+                <input
+                  type="hidden"
+                  name="useItemOf"
+                  id="useItemOf"
+                  value="partner"
+                />
+              )}
               <Button
                 type="submit"
                 name="_action"

@@ -8,7 +8,7 @@ import Sidebar from "~/src/components/Sidebar";
 import { getUserInfoFromCookie } from "~/src/helpers/auth";
 import getPendingTransactions from "~/src/helpers/getPendingTransactions";
 
-const ADMIN_USER_IDS = [0];
+export const ADMIN_USER_IDS = [0];
 
 export async function loader({ request }) {
   const { userId } = await getUserInfoFromCookie(request);
