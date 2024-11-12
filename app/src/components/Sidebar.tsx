@@ -12,6 +12,7 @@ const SIDEBAR_LINKS = [
   { label: "My Items", to: "/my-items" },
   { label: "Add Partner", to: "/addPartner" },
   { label: "My Listings", to: "/myListings" },
+  { label: "Notifications", to: "/notifications" },
 ];
 
 export default function Sidebar() {
