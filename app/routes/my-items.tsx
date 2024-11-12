@@ -1,4 +1,4 @@
-import { ActionFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { ActionFunction } from "@remix-run/node";
 import { Form, useActionData, useLoaderData } from "@remix-run/react";
 import H1 from "~/src/components/H1";
 import Sidebar from "~/src/components/Sidebar";
@@ -10,7 +10,12 @@ import LabeledTextInput from "~/src/components/LabeledTextInput";
 export async function loader({ request }) {
   const { userId } = await getUserInfoFromCookie(request);
 
-  var data;
+  const allItemsData = await db
+    .select("itemName", "valuePerUnit")
+    .from("item")
+    .distinct("itemName");
+
+  let data;
   try {
     data = await db
       .select("itemId", "amount", "itemName", "valuePerUnit")
@@ -29,31 +34,31 @@ export async function loader({ request }) {
     ];
   }
 
-  return { data, userId };
+  return { data, userId, allItemsData };
 }
 
 export const action: ActionFunction = async ({ request }) => {
   const ret = {
     errors: {
       ItemName: "",
-      amount: "",
+      newAmount: "",
     },
   };
 
   const { userId } = await getUserInfoFromCookie(request);
   const formData = await request.formData();
   const ItemName = formData.get("ItemName");
-  const amount = formData.get("amount") as string;
+  const newAmount = formData.get("amount") as string;
 
   if (!ItemName) {
     ret.errors.ItemName = "ItemName is required";
   }
 
-  if (!amount) {
-    ret.errors.amount = "amount is required";
+  if (!newAmount) {
+    ret.errors.newAmount = "amount is required";
   }
 
-  if (ret.errors.ItemName || ret.errors.amount) {
+  if (ret.errors.ItemName || ret.errors.newAmount) {
     return ret;
   }
 
@@ -61,29 +66,43 @@ export const action: ActionFunction = async ({ request }) => {
   const itemValue = await db
     .select("*")
     .from("item")
-    .andWhere("itemName", ItemName);
+    .where("itemName", ItemName);
 
   var nextId = await db("item").max("itemId as maxId");
   const ItemId = nextId[0].maxId + 1;
   const specificVal = itemValue[0]?.valuePerUnit ?? 10;
   const inmovement = false;
+  var currentSet;
+  try{
+    currentSet = await db.table('item').where("itemName", ItemName).andWhere("userId", userId).pluck("amount").then(function(amounts){
+      return amounts[0];
+    });
+  }catch(error){
+    currentSet = 0;
+  }
 
-  const newItem = {
-    itemID: ItemId,
-    userID: userId,
-    amount: amount,
-    itemName: ItemName,
-    inMovement: false,
-    valuePerUnit: specificVal,
-  };
+  if(typeof currentSet == 'undefined'){
+    console.log('here');
+    const newItem = {
+      itemID: ItemId,
+      userID: userId,
+      amount: newAmount,
+      itemName: ItemName,
+      inMovement: false,
+      valuePerUnit: specificVal,
+    };
 
-  const data = await db.insert(newItem).into("item");
+    const data = await db.insert(newItem).into("item");
+  }else{
+    var affectedRows = await db.table("item").where("itemName", ItemName).andWhere("userId", userId).update("amount", currentSet+Number(newAmount));
+    console.log(`${affectedRows} rows updated.`);
+  }
 
   return ret;
 };
 
 export default function myItems() {
-  const { data } = useLoaderData<typeof loader>();
+  const { data, allItemsData } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   return (
@@ -105,13 +124,14 @@ export default function myItems() {
         <div className="flex flex-col items-center justify-center">
           <H1 className="mb-10">Add an Item</H1>
           <Form method="POST" className="flex flex-col gap-4 items-center">
-            <div className="flex flex-col gap-4 items-end">
-              <LabeledTextInput
-                id="ItemName"
-                label="ItemName"
-                errorMessage={actionData?.errors?.ItemName}
-                placeholder="Corn"
-              />
+            <div className="flex flex-col gap-4 items-center">
+              <select name="ItemName" id="ItemName">
+                {allItemsData.map((item) => (
+                  <option key={item.itemName} value={item.itemName}>
+                    {item.itemName}
+                  </option>
+                ))}
+              </select>
               <LabeledTextInput
                 id="amount"
                 label="amount"

@@ -11,6 +11,7 @@ const SIDEBAR_LINKS = [
   { label: "New Listing", to: "/create-listing" },
   { label: "My Items", to: "/my-items" },
   { label: "Add Partner", to: "/addPartner" },
+  { label: "My Listings", to: "/myListings" },
 ];
 
 export default function Sidebar() {
@@ -33,9 +34,13 @@ export default function Sidebar() {
           </div>
           {SIDEBAR_LINKS.map((link) =>
             link.to === location.pathname ? (
-              <p className="font-bold underline">{link.label}</p>
+              <p className="font-bold underline" key={link.to}>
+                {link.label}
+              </p>
             ) : (
-              <Link href={link.to}>{link.label}</Link>
+              <Link href={link.to} key={link.to}>
+                {link.label}
+              </Link>
             )
           )}
         </>

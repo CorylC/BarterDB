@@ -1,5 +1,11 @@
 import { LoaderFunctionArgs } from "@remix-run/node";
-import { Form, json, useLoaderData, useSearchParams } from "@remix-run/react";
+import {
+  Form,
+  json,
+  Link,
+  useLoaderData,
+  useSearchParams,
+} from "@remix-run/react";
 import db from "~/db.server";
 import Button from "~/src/components/Button";
 import H1 from "~/src/components/H1";
@@ -24,8 +30,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   const listings = await db
     .select(
-      "listingID",
-      "itemID",
+      "listingId",
+      "itemId",
       "hasAmount",
       "wants",
       "wantsAmount",
@@ -35,7 +41,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .where({
       wants: searchParams.get("wantItemName"),
     })
-    .whereIn("itemID", offeringItemIDs);
+    .whereIn("itemID", offeringItemIDs)
+    .whereNotIn(
+      "listingId",
+      (
+        await db("transactions").select("listing1 AS listingId")
+      ).map(({ listingId }) => listingId)
+    )
+    .whereNotIn(
+      "listingId",
+      (
+        await db("transactions").select("listing2 AS listingId")
+      ).map(({ listingId }) => listingId)
+    );
 
   return json({ allItemNames, listings });
 }
@@ -87,7 +105,9 @@ export default function Search() {
                   <p>
                     {listing.hasAmount} {offeringItemName} for{" "}
                     {listing.wantsAmount} {listing.wants}
-                    <Button type="button">Trade</Button>
+                    <Link to={`/trade/${listing.listingId}`}>
+                      <Button type="button">Trade</Button>
+                    </Link>
                   </p>
                 </div>
               ))}
