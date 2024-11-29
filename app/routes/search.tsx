@@ -18,42 +18,56 @@ export async function loader({ request }: LoaderFunctionArgs) {
     .from("item");
 
   const searchParams = new URL(request.url).searchParams;
+  var listings;
 
-  const offeringItemIDs = (
-    await db
-      .select("itemID")
-      .from("item")
+  if(searchParams.toString()){
+    const offeringItemIDs = (
+      await db
+        .select("itemID")
+        .from("item")
+        .where({
+          itemName: searchParams.get("offeringItemName"),
+        })
+    ).map((item) => item.itemId);
+
+    listings = await db
+      .select(
+        "listingId",
+        "itemId",
+        "hasAmount",
+        "wants",
+        "wantsAmount",
+        "tradeValue"
+      )
+      .from("listing")
       .where({
-        itemName: searchParams.get("offeringItemName"),
+        wants: searchParams.get("wantItemName"),
       })
-  ).map((item) => item.itemId);
-
-  const listings = await db
-    .select(
-      "listingId",
-      "itemId",
-      "hasAmount",
-      "wants",
-      "wantsAmount",
-      "tradeValue"
-    )
-    .from("listing")
-    .where({
-      wants: searchParams.get("wantItemName"),
-    })
-    .whereIn("itemID", offeringItemIDs)
-    .whereNotIn(
-      "listingId",
-      (
-        await db("transactions").select("listing1 AS listingId")
-      ).map(({ listingId }) => listingId)
-    )
-    .whereNotIn(
-      "listingId",
-      (
-        await db("transactions").select("listing2 AS listingId")
-      ).map(({ listingId }) => listingId)
-    );
+      .whereIn("itemID", offeringItemIDs)
+      .whereNotIn(
+        "listingId",
+        (
+          await db("transactions").select("listing1 AS listingId")
+        ).map(({ listingId }) => listingId)
+      )
+      .whereNotIn(
+        "listingId",
+        (
+          await db("transactions").select("listing2 AS listingId")
+        ).map(({ listingId }) => listingId)
+      );
+    }else{
+      listings = await db
+      .select(
+        "listingId",
+        "itemId",
+        "hasAmount",
+        "wants",
+        "wantsAmount",
+        "tradeValue"
+      )
+      .from("listing");
+    }
 
   return json({ allItemNames, listings });
 }
@@ -62,6 +76,10 @@ export default function Search() {
   const { allItemNames, listings } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const offeringItemName = searchParams.get("offeringItemName");
+  if(offeringItemName == null){
+
+  }
+
   const wantItemName = searchParams.get("wantItemName");
 
   return (
@@ -70,10 +88,13 @@ export default function Search() {
       <div className="flex flex-col p-4">
         <H1>Search</H1>
         <Form method="GET">
-          <div className="">
+          <div>
             <div className="flex gap-2">
               <label htmlFor="offeringItemName">Show listings offering:</label>
-              <select name="offeringItemName" id="offeringItemName">
+              <select name="offeringItemName" id="offeringItemName" defaultValue="">
+                <option value="" disabled>
+                  Select an item
+                </option>
                 {allItemNames.map((item) => (
                   <option key={item.itemName} value={item.itemName}>
                     {item.itemName}
@@ -83,7 +104,10 @@ export default function Search() {
             </div>
             <div className="flex gap-2">
               <label htmlFor="wantItemName">Show listings which want:</label>
-              <select name="wantItemName" id="wantItemName">
+              <select name="wantItemName" id="wantItemName" defaultValue="">
+                <option value="" disabled>
+                  Select an item
+                </option>
                 {allItemNames.map((item) => (
                   <option key={item.itemName} value={item.itemName}>
                     {item.itemName}
@@ -93,6 +117,9 @@ export default function Search() {
             </div>
           </div>
           <Button type="submit">Search</Button>
+          <Button type="reset" style={{ marginLeft: '50px' }}>
+            Clear Fields
+          </Button>
         </Form>
         <div className="border border-black p-4 mt-4">
           {listings.length ? (
@@ -103,10 +130,12 @@ export default function Search() {
                   className="m-2 p-2 border border-black"
                 >
                   <p>
-                    {listing.hasAmount} {offeringItemName} for{" "}
-                    {listing.wantsAmount} {listing.wants}
+                    {parseFloat(listing.hasAmount).toFixed(2)} {offeringItemName} for{" "}
+                    {parseFloat(listing.wantsAmount).toFixed(2)} {listing.wants}
                     <Link to={`/trade/${listing.listingId}`}>
-                      <Button type="button">Trade</Button>
+                      <Button 
+                        type="button"
+                        style={{ marginLeft: '10px' }}>Trade</Button>
                     </Link>
                   </p>
                 </div>
