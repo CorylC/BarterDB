@@ -46,14 +46,20 @@ export async function action({
   const formData = await request.formData();
   const { userId } = await getUserInfoFromCookie(request);
 
-  const partnerInfo = await db("users")
+  const userInfo = await db("users")
     .select("partnerId")
     .where("userId", userId)
     .first();
 
+  const partnerInfo = await db("users")
+    .select("partnerId")
+    .where("userId", userInfo.partnerId)
+    .first();  
+
   const itemWant = formData.get("item-want");
   const itemOffer = formData.get("item-offer");
   const quantity = formData.get("quantity");
+  const ForPartner = formData.get("for-partner");
 
   const itemWantInfo = await db
     .select("itemID", "valuePerUnit")
@@ -81,7 +87,12 @@ export async function action({
   const wantQuantity =
     (Number(quantity) * itemOfferInfo.valuePerUnit) / itemWantInfo.valuePerUnit;
 
-  const isOnBehalfOfPartner = itemOfferInfo.userId === partnerInfo?.partnerId;
+  var isOnBehalfOfPartner;
+  if((partnerInfo?.partnerId === userId) && ForPartner){
+    isOnBehalfOfPartner = true;
+  }else{
+    isOnBehalfOfPartner = false;
+  }
 
   await db
     .insert({
@@ -90,7 +101,7 @@ export async function action({
       hasAmount: quantity,
       wants: itemWant,
       wantsAmount: wantQuantity,
-      partnerId: isOnBehalfOfPartner ? userId : null,
+      partnerId: isOnBehalfOfPartner ? partnerInfo.partnerId : null,
       tradeValue: 1,
     })
     .into("listing");
@@ -153,6 +164,15 @@ export default function CreateListingPage() {
               ))}
             </select>
           </div>
+            <div className="flex items-center gap-2">
+            <label htmlFor="for-partner">Is this for your partner?</label>
+              <input
+                type="checkbox"
+                id="for-partner"
+                name="for-partner"
+                value="true"
+              />
+            </div>
           {actionData?.success === false && (
             <p className="text-red-500">{actionData?.message}</p>
           )}

@@ -17,7 +17,8 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       "listing.wantsAmount",
       "listing.wants",
       "listing.itemId",
-      "item.itemName"
+      "listing.partnerId",
+      "item.itemName",
     )
     .from("listing")
     .where("listingId", listingId)
