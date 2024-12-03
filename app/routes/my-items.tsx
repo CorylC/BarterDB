@@ -19,7 +19,8 @@ export async function loader({ request }) {
     data = await db
       .select("itemId", "amount", "itemName", "valuePerUnit")
       .from("item")
-      .where("userId", userId);
+      .where("userId", userId)
+      .andWhere("InMovement", false);
   } catch (error) {
     data = [
       {

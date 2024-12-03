@@ -14,23 +14,23 @@ import { getUserInfoFromCookie } from "~/src/helpers/auth";
 export async function loader({ request }: LoaderFunctionArgs) {
   const { userId } = await getUserInfoFromCookie(request);
   const ownedItems = await db
-    .select("item.itemName", "item.itemID")
-    .distinct("item.itemName")
+    .select("item.itemName", "item.itemID", "item.inMovement")
     .from("item")
     .leftOuterJoin("listing", function () {
       this.on("item.itemID", "=", "listing.itemId");
     })
     .where({ "item.userId": userId })
-    .andWhere({ "listing.listingId": null });
+    .andWhere({ "item.inMovement": 0});
 
   const partnerItems = await db
-    .select("item.itemName", "item.itemID")
+    .select("item.itemName", "item.itemID", "item.inMovement")
     .from("item")
     .leftOuterJoin("listing", function () {
       this.on("item.itemID", "=", "listing.itemId");
     })
     .join("users", "item.userId", "users.userId")
     .where("users.partnerId", userId)
+    .andWhere({ "item.inMovement": false})
     .andWhere({ "listing.listingId": null });
 
   const availableItems = await db.select("itemName").distinct().from("item");
@@ -93,11 +93,14 @@ export async function action({
   }else{
     isOnBehalfOfPartner = false;
   }
+  
+  var nextId = await db("item").max("itemId as maxId");
+  const ItemId = nextId[0].maxId + 1;
 
   await db
     .insert({
       userId: itemOfferInfo.userId,
-      itemId: itemOfferInfo.itemId,
+      itemId: ItemId,
       hasAmount: quantity,
       wants: itemWant,
       wantsAmount: wantQuantity,
@@ -105,6 +108,24 @@ export async function action({
       tradeValue: 1,
     })
     .into("listing");
+
+
+    const newItem = {
+      itemID: ItemId,
+      userID: userId,
+      amount: quantity,
+      itemName: itemOfferInfo.itemName,
+      inMovement: true,
+      valuePerUnit: itemOfferInfo.valuePerUnit,
+    };
+
+    await db.insert(newItem).into("item");
+
+    await db
+    .table("item")
+    .where("itemID", itemOfferInfo.itemId)
+    .andWhere("userId", userId)
+    .update("amount", Number(itemOfferInfo.amount) - Number(quantity));
 
   return json({ success: true });
 }

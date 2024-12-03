@@ -59,15 +59,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
     }else{
       listings = await db
       .select(
-        "listingId",
-        "itemId",
-        "hasAmount",
-        "wants",
-        "wantsAmount",
-        "tradeValue"
+        "listing.listingId",
+        "listing.itemId",
+        "listing.hasAmount",
+        "listing.wants",
+        "listing.wantsAmount",
+        "listing.tradeValue",
+        "item.itemName"
       )
-      .from("listing");
+      .from("listing")
+      .innerJoin("item", "listing.itemId", "item.itemId");
     }
+
+    console.log('Listings:', listings);
 
   return json({ allItemNames, listings });
 }
@@ -130,7 +134,7 @@ export default function Search() {
                   className="m-2 p-2 border border-black"
                 >
                   <p>
-                    {parseFloat(listing.hasAmount).toFixed(2)} {offeringItemName} for{" "}
+                    {parseFloat(listing.hasAmount).toFixed(2)} {offeringItemName || listing.itemName} for{" "}
                     {parseFloat(listing.wantsAmount).toFixed(2)} {listing.wants}
                     <Link to={`/trade/${listing.listingId}`}>
                       <Button 
