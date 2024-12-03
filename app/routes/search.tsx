@@ -10,8 +10,11 @@ import db from "~/db.server";
 import Button from "~/src/components/Button";
 import H1 from "~/src/components/H1";
 import Sidebar from "~/src/components/Sidebar";
+import { getUserInfoFromCookie } from "~/src/helpers/auth";
 
 export async function loader({ request }: LoaderFunctionArgs) {
+  const { userId } = await getUserInfoFromCookie(request);
+
   const allItemNames = await db
     .select("itemName")
     .distinct("itemName")
@@ -55,7 +58,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         (
           await db("transactions").select("listing2 AS listingId")
         ).map(({ listingId }) => listingId)
-      );
+      )
+      .whereNot("listing.userId", userId);
     }else{
       listings = await db
       .select(
@@ -68,7 +72,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         "item.itemName"
       )
       .from("listing")
-      .innerJoin("item", "listing.itemId", "item.itemId");
+      .innerJoin("item", "listing.itemId", "item.itemId")
+      .whereNot("listing.userId", userId);
     }
 
     console.log('Listings:', listings);
