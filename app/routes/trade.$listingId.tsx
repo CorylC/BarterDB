@@ -4,6 +4,7 @@ import { i } from "node_modules/vite/dist/node/types.d-aGj9QkWt";
 import db from "~/db.server";
 import Button from "~/src/components/Button";
 import H3 from "~/src/components/H3";
+import Link from "~/src/components/Link";
 import Sidebar from "~/src/components/Sidebar";
 import { getUserInfoFromCookie } from "~/src/helpers/auth";
 import randomString from "~/src/helpers/randomString";
@@ -18,7 +19,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
       "listing.wants",
       "listing.itemId",
       "listing.partnerId",
-      "item.itemName",
+      "item.itemName"
     )
     .from("listing")
     .where("listingId", listingId)
@@ -225,6 +226,12 @@ export default function Trade() {
             <p>You cannot make a trade</p>
           )}
         </div>
+        {actionData?.success && (
+          <p>
+            You have initialized a trade. Click{" "}
+            <Link href="/myListings">here</Link> to view it in your listings.
+          </p>
+        )}
       </div>
     </div>
   );

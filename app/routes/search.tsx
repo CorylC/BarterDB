@@ -23,7 +23,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const searchParams = new URL(request.url).searchParams;
   var listings;
 
-  if(searchParams.toString()){
+  if (searchParams.toString()) {
     const offeringItemIDs = (
       await db
         .select("itemID")
@@ -60,8 +60,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
         ).map(({ listingId }) => listingId)
       )
       .whereNot("listing.userId", userId);
-    }else{
-      listings = await db
+  } else {
+    listings = await db
       .select(
         "listing.listingId",
         "listing.itemId",
@@ -73,8 +73,20 @@ export async function loader({ request }: LoaderFunctionArgs) {
       )
       .from("listing")
       .innerJoin("item", "listing.itemId", "item.itemId")
-      .whereNot("listing.userId", userId);
-    }
+      .whereNot("listing.userId", userId)
+      .whereNotIn(
+        "listingId",
+        (
+          await db("transactions").select("listing1 AS listingId")
+        ).map(({ listingId }) => listingId)
+      )
+      .whereNotIn(
+        "listingId",
+        (
+          await db("transactions").select("listing2 AS listingId")
+        ).map(({ listingId }) => listingId)
+      );
+  }
 
   return json({ allItemNames, listings });
 }
@@ -83,8 +95,7 @@ export default function Search() {
   const { allItemNames, listings } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const offeringItemName = searchParams.get("offeringItemName");
-  if(offeringItemName == null){
-
+  if (offeringItemName == null) {
   }
 
   const wantItemName = searchParams.get("wantItemName");
@@ -98,7 +109,11 @@ export default function Search() {
           <div>
             <div className="flex gap-2">
               <label htmlFor="offeringItemName">Show listings offering:</label>
-              <select name="offeringItemName" id="offeringItemName" defaultValue="">
+              <select
+                name="offeringItemName"
+                id="offeringItemName"
+                defaultValue=""
+              >
                 <option value="" disabled>
                   Select an item
                 </option>
@@ -124,7 +139,7 @@ export default function Search() {
             </div>
           </div>
           <Button type="submit">Search</Button>
-          <Button type="reset" style={{ marginLeft: '50px' }}>
+          <Button type="reset" style={{ marginLeft: "50px" }}>
             Clear Fields
           </Button>
         </Form>
@@ -137,12 +152,13 @@ export default function Search() {
                   className="m-2 p-2 border border-black"
                 >
                   <p>
-                    {parseFloat(listing.hasAmount).toFixed(2)} {offeringItemName || listing.itemName} for{" "}
+                    {parseFloat(listing.hasAmount).toFixed(2)}{" "}
+                    {offeringItemName || listing.itemName} for{" "}
                     {parseFloat(listing.wantsAmount).toFixed(2)} {listing.wants}
                     <Link to={`/trade/${listing.listingId}`}>
-                      <Button 
-                        type="button"
-                        style={{ marginLeft: '10px' }}>Trade</Button>
+                      <Button type="button" style={{ marginLeft: "10px" }}>
+                        Trade
+                      </Button>
                     </Link>
                   </p>
                 </div>

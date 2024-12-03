@@ -37,7 +37,7 @@ export async function loader({ request }) {
       .where("listing.userId", userId)
       .orWhere("listing.partnerId", userId);
   } catch (error) {
-      data = [];
+    data = [];
     if (error instanceof Error) {
       data = [];
       console.error(error.message);
@@ -55,28 +55,28 @@ export async function action({ request }) {
 
   try {
     const listing = await db
-    .select(
-      "listing.listingId",
-      "listing.itemId",
-      "listing.hasAmount",
-      "listing.wants",
-      "listing.wantsAmount",
-      "listing.tradeValue",
-      "item.itemName",
-      "item.userId"
-    )
-    .from("listing")
-    .innerJoin("item", "listing.itemId", "item.itemId")
-    .where("listing.listingId", listingId);
-
+      .select(
+        "listing.listingId",
+        "listing.itemId",
+        "listing.hasAmount",
+        "listing.wants",
+        "listing.wantsAmount",
+        "listing.tradeValue",
+        "item.itemName",
+        "item.userId"
+      )
+      .from("listing")
+      .innerJoin("item", "listing.itemId", "item.itemId")
+      .where("listing.listingId", listingId);
 
     if (!listing) throw new Error("Listing not found");
 
     const { itemId, hasAmount } = listing[0];
 
-
     // Check if the item exists in the pool
-    const existingItem = await db.select("amount").from("item")
+    const existingItem = await db
+      .select("amount")
+      .from("item")
       .where("itemName", listing[0].itemName)
       .andWhere("userId", userId)
       .andWhere("inMovement", false);
@@ -88,7 +88,10 @@ export async function action({ request }) {
         .where("itemName", listing[0].itemName)
         .andWhere("userId", userId)
         .andWhere("inMovement", false)
-        .update("amount", Number(existingItem[0].amount) + Number(listing[0].hasAmount));
+        .update(
+          "amount",
+          Number(existingItem[0].amount) + Number(listing[0].hasAmount)
+        );
     } else {
       // Change inMovement to false so it can return to the pool
       await db
@@ -96,15 +99,21 @@ export async function action({ request }) {
         .where("itemId", listing[0].itemId)
         .update("inmovement", false);
     }
-    
+
     // Delete the listing
-    const toBeDeleted = await db.select("*").from("listing").where("listingId", listingId);
+    const toBeDeleted = await db
+      .select("*")
+      .from("listing")
+      .where("listingId", listingId);
     await db.table("listing").where({ listingId }).del();
 
     return { success: true };
   } catch (error) {
     console.error(error instanceof Error ? error.message : "Unknown error");
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
 }
 
@@ -130,7 +139,7 @@ async function DeleteListing(listingId: string) {
   await fetch("/myListings", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ listingId  }),
+    body: JSON.stringify({ listingId }),
   });
 
   // Force page refresh upon successful action, doesn't display otherwise
@@ -189,12 +198,14 @@ function ListingDisplay({
           )}
         </>
       )}
-      <button
-        className="mt-2 bg-red-500 text-white p-1 rounded"
-        onClick={() => DeleteListing(listingId)}
-      >
-        Remove Listing
-      </button>
+      {!isPartOfTransaction && (
+        <button
+          className="mt-2 bg-red-500 text-white p-1 rounded"
+          onClick={() => DeleteListing(listingId)}
+        >
+          Remove Listing
+        </button>
+      )}
     </div>
   );
 }
