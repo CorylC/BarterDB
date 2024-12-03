@@ -76,8 +76,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       .whereNot("listing.userId", userId);
     }
 
-    console.log('Listings:', listings);
-
   return json({ allItemNames, listings });
 }
 
