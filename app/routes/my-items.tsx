@@ -5,7 +5,6 @@ import Sidebar from "~/src/components/Sidebar";
 import { getUserInfoFromCookie } from "~/src/helpers/auth";
 import db from "~/db.server";
 import Button from "~/src/components/Button";
-import LabeledTextInput from "~/src/components/LabeledTextInput";
 
 export async function loader({ request }) {
   const { userId } = await getUserInfoFromCookie(request);
@@ -49,12 +48,13 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const ItemName = formData.get("ItemName");
   const newAmount = formData.get("amount") as string;
+  const removeAmount = formData.get("removeAmount") as string;
 
   if (!ItemName) {
     ret.errors.ItemName = "ItemName is required";
   }
 
-  if (!newAmount) {
+  if (!newAmount && !removeAmount) {
     ret.errors.newAmount = "amount is required";
   }
 
@@ -71,31 +71,58 @@ export const action: ActionFunction = async ({ request }) => {
   var nextId = await db("item").max("itemId as maxId");
   const ItemId = nextId[0].maxId + 1;
   const specificVal = itemValue[0]?.valuePerUnit ?? 10;
-  const inmovement = false;
   var currentSet;
-  try{
-    currentSet = await db.table('item').where("itemName", ItemName).andWhere("userId", userId).pluck("amount").then(function(amounts){
-      return amounts[0];
-    });
-  }catch(error){
+  try {
+    currentSet = await db
+      .table("item")
+      .where("itemName", ItemName)
+      .andWhere("userId", userId)
+      .pluck("amount")
+      .then(function (amounts) {
+        return amounts[0];
+      });
+  } catch (error) {
     currentSet = 0;
   }
 
-  if(typeof currentSet == 'undefined'){
-    console.log('here');
-    const newItem = {
-      itemID: ItemId,
-      userID: userId,
-      amount: newAmount,
-      itemName: ItemName,
-      inMovement: false,
-      valuePerUnit: specificVal,
-    };
+  if (typeof currentSet == "undefined") {
+    if (newAmount) {
+      const newItem = {
+        itemID: ItemId,
+        userID: userId,
+        amount: newAmount,
+        itemName: ItemName,
+        inMovement: false,
+        valuePerUnit: specificVal,
+      };
 
-    const data = await db.insert(newItem).into("item");
-  }else{
-    var affectedRows = await db.table("item").where("itemName", ItemName).andWhere("userId", userId).update("amount", currentSet+Number(newAmount));
-    console.log(`${affectedRows} rows updated.`);
+      await db.insert(newItem).into("item");
+    }
+  } else {
+    if (newAmount) {
+      await db
+        .table("item")
+        .where("itemName", ItemName)
+        .andWhere("userId", userId)
+        .update("amount", currentSet + Number(newAmount));
+    }
+
+    if (removeAmount) {
+      const updatedAmount = currentSet - Number(removeAmount);
+      if (updatedAmount > 0) {
+        await db
+          .table("item")
+          .where("itemName", ItemName)
+          .andWhere("userId", userId)
+          .update("amount", updatedAmount);
+      } else {
+        await db
+          .table("item")
+          .where("itemName", ItemName)
+          .andWhere("userId", userId)
+          .del();
+      }
+    }
   }
 
   return ret;
@@ -113,10 +140,23 @@ export default function myItems() {
           <H1>Current Items:</H1>
           <div>
             {data.map((item) => (
-              <p key={item.itemID}>
-                Name: {item.itemName}, Amount: {item.amount}, Value per Unit:{" "}
-                {item.valuePerUnit}
-              </p>
+              <div key={item.itemID} className="flex items-center gap-4">
+                <p>
+                  Name: {item.itemName}, Amount: {item.amount}, Value per Unit: {" "}
+                  {item.valuePerUnit}
+                </p>
+                <Form method="POST" className="flex gap-2 items-center">
+                  <input type="hidden" name="ItemName" value={item.itemName} />
+                  <input
+                    id="removeAmount"
+                    name="removeAmount"
+                    type="number"
+                    placeholder="0"
+                    className="border rounded px-2"
+                  />
+                  <Button type="submit">Remove</Button>
+                </Form>
+              </div>
             ))}
           </div>
         </div>
@@ -132,11 +172,12 @@ export default function myItems() {
                   </option>
                 ))}
               </select>
-              <LabeledTextInput
+              <input
                 id="amount"
-                label="amount"
-                errorMessage={actionData?.errors?.amount}
+                name="amount"
+                type="number"
                 placeholder="0"
+                className="border rounded px-2"
               />
             </div>
             <Button type="submit">Submit</Button>
