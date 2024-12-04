@@ -35,14 +35,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
     const listingsPromise = db
       .select(
-        "listingId",
-        "itemId",
-        "hasAmount",
-        "wants",
-        "wantsAmount",
-        "tradeValue"
+        "listing.listingId",
+        "listing.itemId",
+        "listing.hasAmount",
+        "listing.wants",
+        "listing.wantsAmount",
+        "listing.tradeValue",
+        "item.itemName"
       )
       .from("listing")
+      .innerJoin("item", "listing.itemId", "item.itemId")
       .whereNotIn(
         "listingId",
         (await db("transactions").select("listing1 AS listingId")).map(
@@ -100,9 +102,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function Search() {
   const { allItemNames, listings } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
-  const offeringItemName = searchParams.get("offeringItemName");
-  if (offeringItemName == null) {
-  }
+  //const offeringItemName = searchParams.get("offeringItemName");
+  //if (offeringItemName == null) {
+  //}
 
   const wantItemName = searchParams.get("wantItemName");
 
@@ -159,7 +161,7 @@ export default function Search() {
                 >
                   <p>
                     {parseFloat(listing.hasAmount).toFixed(2)}{" "}
-                    {offeringItemName || listing.itemName} for{" "}
+                    {listing.itemName} for{" "}
                     {parseFloat(listing.wantsAmount).toFixed(2)} {listing.wants}
                   </p>
                   <Link to={`/trade/${listing.listingId}`}>
