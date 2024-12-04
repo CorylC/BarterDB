@@ -155,18 +155,18 @@ export default function Search() {
               {listings.map((listing, idx) => (
                 <div
                   key={listing.listingID}
-                  className="m-2 p-2 border border-black"
+                  className="m-2 p-2 border border-black flex justify-between items-center"
                 >
                   <p>
                     {parseFloat(listing.hasAmount).toFixed(2)}{" "}
                     {offeringItemName || listing.itemName} for{" "}
                     {parseFloat(listing.wantsAmount).toFixed(2)} {listing.wants}
-                    <Link to={`/trade/${listing.listingId}`}>
-                      <Button type="button" style={{ marginLeft: "10px" }}>
-                        Trade
-                      </Button>
-                    </Link>
                   </p>
+                  <Link to={`/trade/${listing.listingId}`}>
+                    <Button type="button" style={{ marginLeft: "10px" }}>
+                      Trade
+                    </Button>
+                  </Link>
                 </div>
               ))}
             </div>
