@@ -65,7 +65,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
     }
     if (searchParams.get("offeringItemName")) {
-      listingsPromise.whereIn("itemId", offeringItemIDs);
+      listingsPromise.whereIn("listing.itemId", offeringItemIDs);
     }
     listings = await listingsPromise;
   } else {
