@@ -33,7 +33,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         })
     ).map((item) => item.itemId);
 
-    listings = await db
+    const listingsPromise = db
       .select(
         "listingId",
         "itemId",
@@ -43,23 +43,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
         "tradeValue"
       )
       .from("listing")
-      .where({
-        wants: searchParams.get("wantItemName"),
-      })
-      .whereIn("itemID", offeringItemIDs)
       .whereNotIn(
         "listingId",
-        (
-          await db("transactions").select("listing1 AS listingId")
-        ).map(({ listingId }) => listingId)
+        (await db("transactions").select("listing1 AS listingId")).map(
+          ({ listingId }) => listingId
+        )
       )
       .whereNotIn(
         "listingId",
-        (
-          await db("transactions").select("listing2 AS listingId")
-        ).map(({ listingId }) => listingId)
+        (await db("transactions").select("listing2 AS listingId")).map(
+          ({ listingId }) => listingId
+        )
       )
       .whereNot("listing.userId", userId);
+
+    if (searchParams.get("wantItemName")) {
+      listingsPromise.where({
+        wants: searchParams.get("wantItemName"),
+      });
+    }
+    if (searchParams.get("offeringItemName")) {
+      listingsPromise.whereIn("itemId", offeringItemIDs);
+    }
+    listings = await listingsPromise;
   } else {
     listings = await db
       .select(
