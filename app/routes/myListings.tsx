@@ -174,9 +174,9 @@ function ListingDisplay({
   return (
     <div key={listingId} className="p-2 border border-black rounded-sm">
       <p>Offer: {itemName}</p>
-      <p>Quantity: {hasAmount}</p>
+      <p>Quantity: {hasAmount.toFixed(2)}</p>
       <p>Looking For: {wants}</p>
-      <p>Looking For Quantity: {wantsAmount}</p>
+      <p>Looking For Quantity: {wantsAmount.toFixed(2)}</p>
       {isPartOfTransaction && (
         <>
           <p>Your Transaction Key: {hashHalf}</p>
