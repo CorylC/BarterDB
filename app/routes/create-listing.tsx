@@ -20,7 +20,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       this.on("item.itemID", "=", "listing.itemId");
     })
     .where({ "item.userId": userId })
-    .andWhere({ "item.inMovement": 0});
+    .andWhere({ "item.inMovement": 0 });
 
   const partnerItems = await db
     .select("item.itemName", "item.itemID", "item.inMovement")
@@ -30,7 +30,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     })
     .join("users", "item.userId", "users.userId")
     .where("users.partnerId", userId)
-    .andWhere({ "item.inMovement": false})
+    .andWhere({ "item.inMovement": false })
     .andWhere({ "listing.listingId": null });
 
   const availableItems = await db.select("itemName").distinct().from("item");
@@ -46,15 +46,9 @@ export async function action({
   const formData = await request.formData();
   const { userId } = await getUserInfoFromCookie(request);
 
-  const userInfo = await db("users")
-    .select("partnerId")
-    .where("userId", userId)
-    .first();
-
-  const partnerInfo = await db("users")
-    .select("partnerId")
-    .where("userId", userInfo.partnerId)
-    .first();  
+  const partnerId = (
+    await db("users").select("partnerId").where("userId", userId).first()
+  )?.partnerId;
 
   const itemWant = formData.get("item-want");
   const itemOffer = formData.get("item-offer");
@@ -87,45 +81,47 @@ export async function action({
   const wantQuantity =
     (Number(quantity) * itemOfferInfo.valuePerUnit) / itemWantInfo.valuePerUnit;
 
-  var isOnBehalfOfPartner;
-  if((partnerInfo?.partnerId === userId) && ForPartner){
-    isOnBehalfOfPartner = true;
-  }else{
-    isOnBehalfOfPartner = false;
+  const isOnBehalfOfPartner = !!ForPartner;
+
+  const newItem = {
+    userID: itemOfferInfo.userId,
+    amount: quantity,
+    itemName: itemOfferInfo.itemName,
+    inMovement: true,
+    valuePerUnit: itemOfferInfo.valuePerUnit,
+  };
+
+  const newItemId = await db.insert(newItem).into("item").returning("itemId");
+
+  let listingPartnerId;
+  if (itemOfferInfo?.userId !== userId) {
+    listingPartnerId = userId;
+  } else if (isOnBehalfOfPartner) {
+    listingPartnerId = partnerId;
+  } else {
+    listingPartnerId = null;
   }
-  
-  var nextId = await db("item").max("itemId as maxId");
-  const ItemId = nextId[0].maxId + 1;
 
   await db
     .insert({
       userId: itemOfferInfo.userId,
-      itemId: ItemId,
+      itemId: newItemId[0].itemId,
       hasAmount: quantity,
       wants: itemWant,
       wantsAmount: wantQuantity,
-      partnerId: isOnBehalfOfPartner ? partnerInfo.partnerId : null,
+      partnerId: listingPartnerId,
       tradeValue: 1,
     })
     .into("listing");
 
-
-    const newItem = {
-      itemID: ItemId,
-      userID: userId,
-      amount: quantity,
-      itemName: itemOfferInfo.itemName,
-      inMovement: true,
-      valuePerUnit: itemOfferInfo.valuePerUnit,
-    };
-
-    await db.insert(newItem).into("item");
-
+  if (itemOfferInfo?.amount == Number(quantity)) {
+    await db.table("item").where("itemID", itemOfferInfo.itemId).delete();
+  } else {
     await db
-    .table("item")
-    .where("itemID", itemOfferInfo.itemId)
-    .andWhere("userId", userId)
-    .update("amount", Number(itemOfferInfo.amount) - Number(quantity));
+      .table("item")
+      .where("itemID", itemOfferInfo.itemId)
+      .update("amount", Number(itemOfferInfo.amount) - Number(quantity));
+  }
 
   return json({ success: true });
 }
@@ -185,15 +181,15 @@ export default function CreateListingPage() {
               ))}
             </select>
           </div>
-            <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <label htmlFor="for-partner">Is this for your partner?</label>
-              <input
-                type="checkbox"
-                id="for-partner"
-                name="for-partner"
-                value="true"
-              />
-            </div>
+            <input
+              type="checkbox"
+              id="for-partner"
+              name="for-partner"
+              value="true"
+            />
+          </div>
           {actionData?.success === false && (
             <p className="text-red-500">{actionData?.message}</p>
           )}

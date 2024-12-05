@@ -57,13 +57,16 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
   const partnerHasAmount = partnerHasAmountSum?.["sum(`amount`)"] ?? 0;
 
   const canMakeTrade =
-    userHasAmount + partnerHasAmount >= listingInfo.wantsAmount;
+    userHasAmount >= listingInfo.wantsAmount ||
+    partnerHasAmount >= listingInfo.wantsAmount;
 
+  console.log(partnerInfo);
   return {
     listingInfo,
     userHasAmount,
     partnerHasAmount,
     canMakeTrade,
+    hasPartner: Boolean(partnerInfo?.userId),
   };
 }
 
@@ -78,7 +81,7 @@ export async function action({ request, params }: LoaderFunctionArgs) {
     const useItemOf: "partner" | "user" = formData.get("useItemOf") as any;
     const partnerId = (
       await db("users").select("partnerId").where("userId", userId).first()
-    ).partnerId;
+    )?.partnerId;
 
     const listingInfo = await db
       .select([
@@ -105,16 +108,18 @@ export async function action({ request, params }: LoaderFunctionArgs) {
 
     // split off the correct amount of the item
     if (wantsItem.amount > listingInfo.wantsAmount) {
-      await db("item").insert({
-        userId: wantsItem.userId,
-        itemName: listingInfo.wants,
-        amount: listingInfo.wantsAmount,
-        valuePerUnit: wantsItem.valuePerUnit,
-        inMovement: true,
-      });
+      await db("item")
+        .insert({
+          userId: wantsItem.userId,
+          itemName: listingInfo.wants,
+          amount: wantsItem.amount - listingInfo.wantsAmount,
+          valuePerUnit: wantsItem.valuePerUnit,
+          inMovement: false,
+        })
+        .returning("itemId");
 
       await db("item")
-        .update({ amount: wantsItem.amount - listingInfo.wantsAmount })
+        .update({ amount: listingInfo.wantsAmount, inMovement: true })
         .where("itemId", wantsItem.itemId);
     }
 
@@ -149,8 +154,13 @@ export async function action({ request, params }: LoaderFunctionArgs) {
 }
 
 export default function Trade() {
-  const { listingInfo, userHasAmount, partnerHasAmount, canMakeTrade } =
-    useLoaderData<typeof loader>();
+  const {
+    listingInfo,
+    userHasAmount,
+    partnerHasAmount,
+    canMakeTrade,
+    hasPartner,
+  } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
 
   const userHasEnough = userHasAmount > listingInfo.wantsAmount;
@@ -176,9 +186,11 @@ export default function Trade() {
         <p>
           You have: {userHasAmount} {listingInfo.wants}
         </p>
-        <p>
-          Your partner has: {partnerHasAmount} {listingInfo.wants}
-        </p>
+        {hasPartner && (
+          <p>
+            Your partner has: {partnerHasAmount} {listingInfo.wants}
+          </p>
+        )}
         <div>
           {canMakeTrade ? (
             <Form method="POST">
