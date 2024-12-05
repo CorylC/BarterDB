@@ -85,8 +85,8 @@ export const action: ActionFunction = async ({ request }) => {
   } catch (error) {
     currentSet = 0;
   }
-
-  if (typeof currentSet == "undefined") {
+  
+  if (typeof currentSet === "undefined") {
     if (newAmount) {
       const newItem = {
         itemID: ItemId,
@@ -113,7 +113,7 @@ export const action: ActionFunction = async ({ request }) => {
       if (updatedAmount > 0) {
         await db
           .table("item")
-          .where("itemName", ItemName)
+          .where("itemId", ItemId)
           .andWhere("userId", userId)
           .update("amount", updatedAmount);
       } else {

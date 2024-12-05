@@ -29,31 +29,53 @@ export async function action({ request }) {
   if (_action === "APPROVE") {
     const transactionId = formData.get("transactionId");
     const hashHalf = formData.get("hashHalf");
-    const fullHash = await db("transactions")
-      .select("fullHash")
+
+    const transaction = await db("transactions")
+      .select("fullHash", "firstHalfHash", "secondHalfHash", "listing1", "listing2")
       .where("transactionId", transactionId)
       .first();
 
-    if (hashHalf === fullHash.fullHash.slice(0, 8)) {
-      await db
-        .update({ firstHalfHash: hashHalf })
-        .from("transactions")
-        .where("transactionId", transactionId);
-
-      return { success: true };
-    } else if (hashHalf === fullHash.fullHash.slice(8, 16)) {
-      await db
-        .update({ secondHalfHash: hashHalf })
-        .from("transactions")
-        .where("transactionId", transactionId);
-
-      return { success: true };
-    } else {
-      return { success: false };
+    if (!transaction) {
+      return { success: false, message: "Transaction not found." };
     }
+
+    const { fullHash, firstHalfHash, secondHalfHash } = transaction;
+
+    if (hashHalf === fullHash.slice(0, 8)) {
+      // Approving the first half
+      await db("transactions")
+        .update({ firstHalfHash: hashHalf })
+        .where("transactionId", transactionId);
+    } else if (hashHalf === fullHash.slice(8, 16)) {
+      // Approving the second half
+      await db("transactions")
+        .update({ secondHalfHash: hashHalf })
+        .where("transactionId", transactionId);
+    } else {
+      // Invalid hash
+      return { success: false, message: "Invalid hash." };
+    }
+
+    // Check if both sides are approved
+    const updatedTransaction = await db("transactions")
+      .select("firstHalfHash", "secondHalfHash")
+      .where("transactionId", transactionId)
+      .first();
+
+    if (updatedTransaction.firstHalfHash && updatedTransaction.secondHalfHash) {
+      // Both sides are approved, remove the transaction from the database
+      const firstItem = await db.select("itemId").from("listing").where("listingId", transaction.listing1);
+      const secondItem = await db.select("itemId").from("listing").where("listingId", transaction.listing2)
+      
+      await db.table("item").where("itemId", firstItem[0].itemId).del();
+      await db.table("item").where("itemId", secondItem[0].itemId).del();
+      return { success: true, message: "Trade approved and transaction removed." };
+    }
+
+    return { success: true, message: "Trade approved for one side." };
   }
 
-  return { success: false };
+  return { success: false, message: "Invalid action." };
 }
 
 export default function AdminDashboard() {

@@ -100,6 +100,7 @@ export async function action({ request, params }: LoaderFunctionArgs) {
       .select("itemId", "userId", "amount", "valuePerUnit")
       .where("itemName", listingInfo.wants)
       .andWhere("userId", useItemOf === "partner" ? partnerId : userId)
+      .andWhere("inMovement", false)
       .first();
 
     // split off the correct amount of the item
@@ -107,13 +108,13 @@ export async function action({ request, params }: LoaderFunctionArgs) {
       await db("item").insert({
         userId: wantsItem.userId,
         itemName: listingInfo.wants,
-        amount: wantsItem.amount - listingInfo.wantsAmount,
+        amount: listingInfo.wantsAmount,
         valuePerUnit: wantsItem.valuePerUnit,
-        inMovement: false,
+        inMovement: true,
       });
 
       await db("item")
-        .update({ amount: listingInfo.wantsAmount })
+        .update({ amount: wantsItem.amount - listingInfo.wantsAmount })
         .where("itemId", wantsItem.itemId);
     }
 

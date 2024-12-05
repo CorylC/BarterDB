@@ -42,46 +42,63 @@ export const action: ActionFunction = async ({ request }) => {
   const userId = session.get("userId");
   const formData = await request.formData();
   const partnerId = formData.get("partnerId");
+  const _action = formData.get("_action");
 
-  if (!partnerId) {
-    ret.errors.partnerId = "partnerId is required";
-  }
+  if (_action === "ADD") {
+    if (!partnerId) {
+      ret.errors.partnerId = "partnerId is required";
+    }
 
-  if (ret.errors.partnerId) {
-    return ret;
-  }
+    if (ret.errors.partnerId) {
+      return ret;
+    }
 
-  // if the form structure is valid, check the db
-  const samePartner = await db
-    .select("partnerId")
-    .from("users")
-    .where("userId", userId);
+    // if the form structure is valid, check the db
+    const samePartner = await db
+      .select("partnerId")
+      .from("users")
+      .where("userId", userId);
 
-  const partner = await db
-    .select("partnerId")
-    .from("users")
-    .where("userId", partnerId);
+    const partner = await db
+      .select("partnerId")
+      .from("users")
+      .where("userId", partnerId);
 
-  if (samePartner[0].partnerId == partnerId && partner[0].partnerId == userId) {
-    ret.errors.partnerId = "You are already partners";
-    return ret;
-  } else if (samePartner[0].partnerId == partnerId) {
-    ret.errors.partnerId =
-      "Please have your partner set their partnerId to your userId of " +
-      userId;
-    return ret;
-  } else if (partnerId == userId) {
-    ret.errors.partnerId = "You cannot be partners with yourself";
-    return ret;
-  } else {
+    if (samePartner[0].partnerId == partnerId && partner[0].partnerId == userId) {
+      ret.errors.partnerId = "You are already partners";
+      return ret;
+    } else if (samePartner[0].partnerId == partnerId) {
+      ret.errors.partnerId =
+        "Please have your partner set their partnerId to your userId of " +
+        userId;
+      return ret;
+    } else if (partnerId == userId) {
+      ret.errors.partnerId = "You cannot be partners with yourself";
+      return ret;
+    } else {
+      await db("users")
+        .where("userId", userId)
+        .update({ partnerId }, "partnerId");
+
+      // @ts-ignore
+      ret.success = true;
+      return ret;
+    }
+  } else if (_action === "REMOVE") {
     await db("users")
       .where("userId", userId)
-      .update({ partnerId }, "partnerId");
+      .update({ partnerId: null });
 
-    // @ts-ignore
-    ret.success = true;
-    return ret;
+    return { success: true, message: "Partner removed successfully." };
+  } else if (_action === "CANCEL") {
+    await db("users")
+      .where("userId", userId)
+      .update({ partnerId: null });
+
+    return { success: true, message: "Partner request canceled successfully." };
   }
+
+  return ret;
 };
 
 export default function addPartner() {
@@ -95,15 +112,29 @@ export default function addPartner() {
     <div className="flex">
       <Sidebar />
       <div className="flex flex-col h-screen w-screen items-center justify-center">
-        <H1 className="mb-10">Add a partner</H1>
+        <H1 className="mb-10">Manage Partner</H1>
         {partnershipMade && (
-          <p>You are partners with user {partnerData?.username}</p>
+          <div className="flex flex-col gap-4 items-center">
+            <p>You are partners with user {partnerData?.username}</p>
+            <Form method="POST" className="flex flex-col gap-4 items-center">
+              <Button type="submit" name="_action" value="REMOVE">
+                Remove Partner
+              </Button>
+            </Form>
+          </div>
         )}
         {pendingPartnership && (
-          <p>
-            You are pending partners with user {userData.partnerId}. They must
-            log in to their account and add your ID to complete the partnership.
-          </p>
+          <div className="flex flex-col gap-4 items-center">
+            <p>
+              You are pending partners with user {userData.partnerId}. They must
+              log in to their account and add your ID to complete the partnership.
+            </p>
+            <Form method="POST" className="flex flex-col gap-4 items-center">
+              <Button type="submit" name="_action" value="CANCEL">
+                Cancel Request
+              </Button>
+            </Form>
+          </div>
         )}
         {!pendingPartnership && !partnershipMade && (
           <>
@@ -120,7 +151,7 @@ export default function addPartner() {
                   placeholder="partnerId"
                 />
               </div>
-              <Button type="submit">
+              <Button type="submit" name="_action" value="ADD">
                 {actionData?.success ? "Success" : "Add Partner"}
               </Button>
             </Form>
