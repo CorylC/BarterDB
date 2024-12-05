@@ -177,7 +177,7 @@ export default function Trade() {
         <H3>Trade Info</H3>
         <div className="border border-black m-3 p-3">
           <p>
-            Offering: {listingInfo.itemName} ({listingInfo.hasAmount})
+            Offering: {listingInfo.itemName} ({listingInfo.hasAmount*.98})
           </p>
           <p>
             Wants: {listingInfo.wants} ({listingInfo.wantsAmount})

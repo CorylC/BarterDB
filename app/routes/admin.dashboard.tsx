@@ -149,6 +149,9 @@ function SideOfTrade({
       <p>
         Sending: {itemAmount} {itemName}
       </p>
+      <p>
+        Take {itemAmount*.02} {itemName} for compensation. 
+      </p>
       <p>Secure Key: {hashHalf}</p>
       <input type="hidden" name="transactionId" value={transactionId} />
       <input type="hidden" name="hashHalf" value={hashHalf} />

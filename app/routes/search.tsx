@@ -160,7 +160,7 @@ export default function Search() {
                   className="m-2 p-2 border border-black flex justify-between items-center"
                 >
                   <p>
-                    {parseFloat(listing.hasAmount).toFixed(2)}{" "}
+                    {listing.hasAmount.toFixed(2)*.98}{" "}
                     {listing.itemName} for{" "}
                     {parseFloat(listing.wantsAmount).toFixed(2)} {listing.wants}
                   </p>

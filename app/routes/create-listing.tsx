@@ -139,6 +139,9 @@ export default function CreateListingPage() {
         <p className="my-5">
           Please enter the details of the trade you would like to make.
         </p>
+        <p className="my-5">
+          Remember that we will take a 2% commission for shipping and management fees.
+        </p>
         <Form method="POST" className="flex flex-col gap-4">
           <div className="flex gap-3">
             <label htmlFor="item-offer">

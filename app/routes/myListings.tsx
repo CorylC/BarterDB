@@ -176,7 +176,7 @@ function ListingDisplay({
       <p>Offer: {itemName}</p>
       <p>Quantity: {hasAmount.toFixed(2)}</p>
       <p>Looking For: {wants}</p>
-      <p>Looking For Quantity: {wantsAmount.toFixed(2)}</p>
+      <p>Looking For Quantity: {wantsAmount.toFixed(2)*.98}</p>
       {isPartOfTransaction && (
         <>
           <p>Your Transaction Key: {hashHalf}</p>
